@@ -4,8 +4,76 @@ import numpy as np
 import time
 import multiprocessing as mp
 import matplotlib.pyplot as plt
+from torch.utils import data
 from torchvision import datasets
 from torch.utils.data import DataLoader
+
+def check_accuracy(data_loader, model, dtype=torch.float32, device=torch.device('cpu')):
+    if data_loader.dataset.train:
+        print('Checking accuracy on validation set')
+    else:
+        print('Checking accuracy on test set')   
+    num_correct = 0
+    num_samples = 0
+    model.eval()  # set model to evaluation mode
+    with torch.no_grad():
+        for x, y in data_loader:
+            x = x.to(device=device, dtype=dtype)
+            y = y.to(device=device, dtype=torch.long)
+
+            scores = model(x)
+            _, preds = scores.max(1)
+
+            num_correct += (preds == y).sum()
+            num_samples += preds.size(0)
+        acc = float(num_correct) / num_samples
+        print('Got %d / %d correct (%.2f)' % (num_correct, num_samples, 100 * acc))
+
+def train_PyTorch(model, optimizer, loader_train, loader_val, \
+        loss_function, print_every=100, dtype=torch.float32, \
+        device=torch.device('cpu'), epochs=1):
+    '''
+    Training pipeline/loop for PyTorch
+    implementations.
+
+    Args:
+        model: The model/architecture, an `torch.nn` object.
+        optimizer: The optimzer used, an `torch.optim` object.
+        loader_train: DataLoader object for training set.
+        loader_val: DataLoader object for validation set.
+        loss_function: Loss function of type `torch.nn.functional`
+        print_every: How often to print accuracy and loss.
+        dtype: The datatype of the tensors
+        device: Where to place the tensors, cpu or cuda.
+        epochs: Number of epochs.
+    Returns:
+        None
+    Raises
+    '''
+    model = model.to(device=device)
+    for epoch in range(epochs):
+        for batch, (x, y) in enumerate(loader_train):
+            model.train()
+
+            x = x.to(device=device, dtype=dtype)
+            y = y.to(device=device, dtype=torch.long) # torch.long = int64
+
+            scores = model(x)
+            loss = loss_function(scores, y)
+
+            optimizer.zero_grad()
+            loss.backward()
+
+            optimizer.step()
+
+            if batch % print_every == 0:
+                print('Iteration %d, loss = %.4f' % (batch, loss.item()))
+                check_accuracy(loader_val, model, dtype=dtype, device=device)
+                print()
+
+        print('{} epochs completed...'.format(epoch+1))
+
+
 
 def flatten(X, dtype="np.ndarray"):
     '''
@@ -126,6 +194,3 @@ def get_optimal_num_workers(data, num_epochs=3, batch_size=64, VERBOSE=False):
             .format(best_num_workers, best_time_taken, diff, worst_num_workers))
 
     return best_num_workers
-
-
-
