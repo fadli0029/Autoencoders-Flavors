@@ -1,9 +1,11 @@
 import torch
 import random
 import numpy as np
+import time
+import multiprocessing as mp
 import matplotlib.pyplot as plt
-from torch.utils.data import DataLoader
 from torchvision import datasets
+from torch.utils.data import DataLoader
 
 def flatten(X, dtype="np.ndarray"):
     '''
@@ -73,6 +75,53 @@ def visualize_dataset(data, dtype, n_samples=25, figsize=(10, 10)):
             plt.title(y)
     else:
         return None
+
+def get_optimal_num_workers(data, num_epochs=3, batch_size=64, VERBOSE=False):
+    '''
+    Find the optimal number of workers (i.e: processors) to use
+    during data loading, where optimality is measured based on 
+    time taken to load the data using torch DataLoader.
+
+    Note: For small dataset, it might be unnecessary to use
+    multiple processors.
+
+    Args:
+        data: A torch datasets.XXX object.
+        num_epochs: For how many epochs our loading `data`.
+        batch_size: How many datapoints to load per batch.
+    Returns:
+        num_workers: Optimal number of workers.
+    Raises:
+        TODO
+    '''
+    print('Finding the best number of workers for dataloader...')
+    record = {}
+    for num_workers in range(2, mp.cpu_count() + 1, 2):
+        loader_TRAIN = DataLoader(data, batch_size=batch_size,
+                shuffle=True, num_workers=num_workers, pin_memory=True)
+        start = time.perf_counter()
+        for epoch in range(num_epochs):
+            for i, (x, y) in enumerate(loader_TRAIN):
+                pass
+        end = time.perf_counter()
+        record[num_workers] = round(end-start, 3)
+
+    if VERBOSE:
+        for num_workers, t in record.items():
+            print('Number of workers: {} | Time taken: {}'.format(num_workers, t))
+
+    best_num_workers = min(record, key=record.get)
+    worst_num_workers = max(record, key=record.get)
+    best_time_taken = record[best_num_workers]
+    worst_time_taken = record[worst_num_workers]
+    diff = worst_time_taken - best_time_taken
+
+    print('\nBest mumber of workers for DataLoader is {} \
+            \nwith time taken {}s, about {}s faster \
+            \nthan the slowest number of workers ({}).'\
+            .format(best_num_workers, best_time_taken, diff, worst_num_workers))
+
+    return best_num_workers
 
 
 
