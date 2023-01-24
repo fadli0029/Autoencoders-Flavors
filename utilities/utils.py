@@ -95,6 +95,10 @@ def get_optimal_num_workers(data, num_epochs=3, batch_size=64, VERBOSE=False):
         TODO
     '''
     print('Finding the best number of workers for dataloader...')
+    print('\nP/S: Do not panick with the warning that says: \
+           \n[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool). \
+           \nThis is a known issue and it is not something you should be worried about. \
+           \nSee: https://github.com/pytorch/pytorch/issues/57273')
     record = {}
     for num_workers in range(2, mp.cpu_count() + 1, 2):
         loader_TRAIN = DataLoader(data, batch_size=batch_size,
