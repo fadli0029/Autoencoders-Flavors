@@ -114,7 +114,7 @@ def get_optimal_num_workers(data, num_epochs=3, batch_size=64, VERBOSE=False):
     worst_num_workers = max(record, key=record.get)
     best_time_taken = record[best_num_workers]
     worst_time_taken = record[worst_num_workers]
-    diff = worst_time_taken - best_time_taken
+    diff = round(worst_time_taken - best_time_taken, 3)
 
     print('\nBest mumber of workers for DataLoader is {} \
             \nwith time taken {}s, about {}s faster \
