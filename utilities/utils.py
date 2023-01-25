@@ -1,21 +1,31 @@
+import time
 import torch
 import random
 import numpy as np
-import time
 import multiprocessing as mp
 import matplotlib.pyplot as plt
-from torch.utils import data
-from torchvision import datasets
 from torch.utils.data import DataLoader
 
-def check_accuracy(data_loader, model, dtype=torch.float32, device=torch.device('cpu')):
+def check_accuracy(
+        data_loader,
+        model,
+        dtype=torch.float32,
+        device=torch.device('cpu')
+    ):
+    # TODO: docstrings for desc, args, returns, raises.
+    '''
+    Desc.
+    '''
+
     if data_loader.dataset.train:
         print('Checking accuracy on validation set')
     else:
         print('Checking accuracy on test set')   
+
     num_correct = 0
     num_samples = 0
-    model.eval()  # set model to evaluation mode
+
+    model.eval() # set model to evaluation mode
     with torch.no_grad():
         for x, y in data_loader:
             x = x.to(device=device, dtype=dtype)
@@ -29,9 +39,16 @@ def check_accuracy(data_loader, model, dtype=torch.float32, device=torch.device(
         acc = float(num_correct) / num_samples
         print('Got %d / %d correct (%.2f)' % (num_correct, num_samples, 100 * acc))
 
-def train_PyTorch(model, optimizer, loader_train, loader_val, \
-        loss_function, print_every=100, dtype=torch.float32, \
-        device=torch.device('cpu'), epochs=1):
+def train_PyTorch(
+        model,
+        optimizer,
+        loader_train,
+        loader_val,
+        loss_function,
+        print_every=100,
+        dtype=torch.float32, \
+        device=torch.device('cpu'),
+        epochs=1):
     '''
     Training pipeline/loop for PyTorch
     implementations.
@@ -107,7 +124,7 @@ def flatten(X, dtype="np.ndarray"):
     elif dtype == "np.ndarray":
         return X.reshape(N, -1)
 
-def visualize_dataset(data, dtype, n_samples=25, figsize=(10, 10)):
+def visualize_dataset(data, n_samples=25, figsize=(10, 10)):
     '''
     Randomly pick datapoints in `data` and visualize (plot)
     them as a MxN matplotlib grid where MxN evaluates to n_samples.
@@ -128,7 +145,7 @@ def visualize_dataset(data, dtype, n_samples=25, figsize=(10, 10)):
     psq = np.sqrt(n_samples)
     assert int(str(psq).split('.')[1]) == 0
 
-    samples = [random.randint(0, len(data)) for _ in range(n_samples)] # Generate random samples
+    samples = [random.randint(0, len(data)-1) for _ in range(n_samples)] # Generate random samples
     M = N = int(psq)
     if not isinstance(data, np.ndarray):
         fig = plt.figure(figsize=figsize)
@@ -138,9 +155,9 @@ def visualize_dataset(data, dtype, n_samples=25, figsize=(10, 10)):
             label = y
             
             fig.add_subplot(M, N, i+1)
-            plt.imshow(img, cmap="gray")
+            plt.imshow(img)
             plt.axis('off')
-            plt.title(y)
+            plt.title(label)
     else:
         return None
 
@@ -172,8 +189,8 @@ def get_optimal_num_workers(data, num_epochs=3, batch_size=64, VERBOSE=False):
         loader_TRAIN = DataLoader(data, batch_size=batch_size,
                 shuffle=True, num_workers=num_workers, pin_memory=True)
         start = time.perf_counter()
-        for epoch in range(num_epochs):
-            for i, (x, y) in enumerate(loader_TRAIN):
+        for _ in range(num_epochs):
+            for _, (_, _) in enumerate(loader_TRAIN):
                 pass
         end = time.perf_counter()
         record[num_workers] = round(end-start, 3)
