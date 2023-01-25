@@ -1,6 +1,7 @@
 import torch
 import random
 import numpy as np
+from utils import flatten
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 
@@ -153,37 +154,3 @@ def train(
                 print()
 
         print('{} epochs completed...\n'.format(epoch+1))
-
-
-
-def flatten(X, dtype="np.ndarray"):
-    '''
-    Given `X` of shape (N, C, H, W), this function 'flattens'
-    the `C`, `H`, and `W` dimension of `X` into a single
-    vector C*H*W per image.
-
-    Args:
-        X: `X` is an image dataset shape (N, C, H, W), where:
-                N := Number of datapoints.
-                C := Number of channels (ex: C=3 for RGB channel).
-                H := Height of image.
-                W := Width of image.
-            For example, sampling batches of 64 of MNIST dataset will
-            give: (64, 1, 28, 28) since the MNIST dataset are black
-            and white images (1 channel) of size 28x28 pixels.
-        dtype: A string, "np.ndarray" or "torch.tensor"
-    Returns:
-        X: Flatten version of `X`
-    Raises:
-        AssertionError: If `X` is not of shape (N, C, H, W)
-    '''
-    assert torch.is_tensor(X) or type(X) == np.ndarray
-    assert len(X.shape) == 4, \
-            'Input X must be of shape (N, C, H, W) to use flatten(X)'
-    assert dtype == "torch.tensor" or dtype == "np.ndarray"
-
-    N = X.shape[0]
-    if dtype == "torch.tensor":
-        return X.view(N, -1)
-    elif dtype == "np.ndarray":
-        return X.reshape(N, -1)
